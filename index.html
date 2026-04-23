@@ -866,13 +866,14 @@ function signed(n){
 ========================================================= */
 function tabsView(){
   const tabs = [
-    { id: "all", label: "Dashboard" },
-    { id: "g1", label: "Group 1" },
-    { id: "g2", label: "Group 2" },
-    { id: "g3", label: "Group 3" },
-    { id: "g4", label: "Group 4" },
-    { id: "weight", label: "Weight Analyzer", external: true, url: "/KPFarmManager/Weight_Calculator.html" }  // ← change URL
-  ];
+  { id: "all", label: "Dashboard" },
+  { id: "g1", label: "Group 1" },
+  { id: "g2", label: "Group 2" },
+  { id: "g3", label: "Group 3" },
+  { id: "g4", label: "Group 4" },
+  { id: "weight", label: "Weight Analyzer", external: true, url: "https://vonrmangaron.github.io/KPFarmManager/Weight_Calculator.html" },
+  { id: "result", label: "Result Estimator", external: true, url: "https://your-domain.com/result-estimator.html" }   
+];
 
   const iconBtn = (onClick, label, svg, extra="") => `
     <button
@@ -907,30 +908,36 @@ function tabsView(){
       <div class="flex flex-wrap gap-2">
         ${tabs.map(t => {
           if (t.external) {
-            // External link tab – opens in new window
-            return `
-              <button onclick="window.open('${t.url}', '_blank')"
-                class="px-3.5 py-2 rounded-xl text-sm border font-semibold
-                       bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100
-                       flex items-center gap-2 transition">
-                <!-- Scale icon -->
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 1M6 7l-3 9m9-9l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M18 7l3 1m0 0l-3 9"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m-3-3h6"></path>
-                </svg>
-                ${t.label}
-              </button>
-            `;
-          } else {
-            const active = t.id === activeTab;
-            return `
-              <button onclick="setTab('${t.id}')"
-                class="px-3.5 py-2 rounded-xl text-sm border font-semibold
-                  ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}">
-                ${t.label}
-              </button>
-            `;
-          }
+  // Distinguish between the two external tabs
+  const isResultEstimator = t.label === "Result Estimator";
+  
+  // Different styles
+  const buttonClass = isResultEstimator
+    ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 shadow-sm ring-1 ring-amber-200"
+    : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100";
+  
+  // Different icons
+  const icon = isResultEstimator
+    ? `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`
+    : `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 1M6 7l-3 9m9-9l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M18 7l3 1m0 0l-3 9"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m-3-3h6"></path></svg>`;
+  
+  return `
+    <button onclick="window.open('${t.url}', '_blank')"
+      class="px-3.5 py-2 rounded-xl text-sm border font-semibold flex items-center gap-2 transition ${buttonClass}">
+      ${icon}
+      ${t.label}
+    </button>
+  `;
+} else {
+  const active = t.id === activeTab;
+  return `
+    <button onclick="setTab('${t.id}')"
+      class="px-3.5 py-2 rounded-xl text-sm border font-semibold
+        ${active ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}">
+      ${t.label}
+    </button>
+  `;
+}
         }).join("")}
       </div>
 
