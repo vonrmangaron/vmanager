@@ -21,7 +21,6 @@
       background-repeat: no-repeat;
       position: relative;
     }
-    /* Stronger cinematic overlay for contrast */
     body::before {
       content: "";
       position: fixed;
@@ -60,9 +59,14 @@
     }
 
     .factor-badge {
-      display: inline-block; padding: 0.125rem 0.5rem;
-      border-radius: 9999px; font-size: 0.75rem; font-weight: 700;
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
       letter-spacing: 0.01em;
+      line-height: 1.2;
+      white-space: nowrap;
     }
 
     .toast {
@@ -89,15 +93,24 @@
       transition: transform .12s ease, box-shadow .2s ease, background-color .12s ease;
       border: 1px solid rgba(226,232,240,0.9);
       background: rgba(255,255,255,0.9);
+      color: inherit;
     }
-    .btn:hover { background: rgba(248,250,252,1); transform: translateY(-1px); box-shadow: 0 12px 22px -18px rgba(2,6,23,0.35); }
+    .btn:hover {
+      background: rgba(248,250,252,1);
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px -18px rgba(2,6,23,0.35);
+      color: inherit;
+    }
     .btn-primary {
       background: linear-gradient(135deg, #10b981, #14b8a6);
       color: white;
       border-color: rgba(16,185,129,0.5);
       box-shadow: 0 16px 30px -22px rgba(16,185,129,0.65);
     }
-    .btn-primary:hover { filter: brightness(1.02); }
+    .btn-primary:hover {
+      filter: brightness(1.02);
+      color: white;
+    }
     .pill {
       padding: .25rem .6rem; border-radius: 9999px;
       border: 1px solid rgba(226,232,240,0.9);
@@ -200,15 +213,10 @@
                 <tbody id="pickupTableBody"></tbody>
               </table>
             </div>
-          </div>
 
-          <div class="flex justify-end gap-3">
-            <button id="resetShedBtn" class="btn">
-              <i class="fas fa-undo-alt"></i> Reset Shed
-            </button>
-            <button id="calculateBtn" class="btn btn-primary">
-              <i class="fas fa-chart-line"></i> Refresh Shed
-            </button>
+            <p class="text-xs text-slate-500 mt-2">
+              ✅ Auto-refresh enabled — no manual refresh needed.
+            </p>
           </div>
 
           <div id="shedResultCard" class="mt-5 p-4 rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50/90 to-teal-50/90 hidden">
@@ -231,7 +239,6 @@
       <div class="glass rounded-2xl shadow-xl p-5">
         <div class="border-b border-slate-200/70 pb-2 mb-4">
           <h2 class="text-lg font-extrabold text-slate-800">📊 Farm Summary</h2>
-          <!-- Removed requested formula text line -->
         </div>
 
         <div class="space-y-4">
@@ -302,7 +309,6 @@
           <div id="shedAgeList" class="mt-2 space-y-1 max-h-40 overflow-auto text-slate-600"></div>
         </details>
       </div>
-
     </div>
   </div>
 
@@ -353,7 +359,6 @@
 
         if (!payload || !Array.isArray(payload.sheds) || payload.sheds.length !== 8) return false;
 
-        // Basic shape validation & fallback
         sheds = payload.sheds.map(s => ({
           startBirds: Number.isFinite(+s.startBirds) ? +s.startBirds : 1000,
           mortalBirds: Number.isFinite(+s.mortalBirds) ? +s.mortalBirds : 40,
@@ -537,6 +542,7 @@
 
     function saveCurrentShed(){
       const shed = sheds[activeShed];
+      if (!shed) return;
       shed.startBirds = parseInt(startBirdsInput.value) || 0;
       shed.mortalBirds = parseInt(mortalBirdsInput.value) || 0;
       shed.dayOld = parseFloat(dayOldInput.value) || REF_DAY_OLD;
@@ -544,12 +550,14 @@
       shed.cleanDate = cleanDateInput.value;
       shed.pickups = [];
 
-      for(let row of pickupRows){
-        const age = parseInt(row.age.value);
-        const birds = parseInt(row.birds.value);
-        const weight = parseFloat(row.weight.value);
-        if(!isNaN(age) && age>0 && !isNaN(birds) && birds>0 && !isNaN(weight) && weight>0)
-          shed.pickups.push({ age, birds, weight });
+      if (Array.isArray(pickupRows)) {
+        for(let row of pickupRows){
+          const age = parseInt(row.age.value);
+          const birds = parseInt(row.birds.value);
+          const weight = parseFloat(row.weight.value);
+          if(!isNaN(age) && age>0 && !isNaN(birds) && birds>0 && !isNaN(weight) && weight>0)
+            shed.pickups.push({ age, birds, weight });
+        }
       }
     }
 
@@ -568,13 +576,15 @@
         const tr = document.createElement('tr');
         tr.className = 'border-b border-slate-200/70';
         tr.innerHTML = `
-          <td class="p-2 text-slate-500">${i+1}</td>
-          <td class="p-2"><input type="number" step="1" min="1" class="age w-20 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
-          <td class="p-2"><input type="number" step="1" min="1" class="birds w-24 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
-          <td class="p-2"><input type="number" step="any" min="0.1" class="weight w-28 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
-          <td class="rossRef text-slate-500 p-2">—</td>
-          <td class="actualAvg p-2 text-slate-700">—</td>
-          <td class="factorBadge p-2">—</td>
+          <td class="p-3 text-slate-500">${i+1}</td>
+          <td class="p-3"><input type="number" step="1" min="1" class="age w-20 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
+          <td class="p-3"><input type="number" step="1" min="1" class="birds w-24 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
+          <td class="p-3"><input type="number" step="any" min="0.1" class="weight w-28 border border-slate-300 rounded-xl p-1.5 bg-white"></td>
+          <td class="rossRef text-slate-500 p-3">—</td>
+          <td class="actualAvg p-3 text-slate-700">—</td>
+          <td class="p-3">
+            <span class="factorBadge factor-badge bg-slate-100 text-slate-500">—</span>
+          </td>
         `;
         tbody.appendChild(tr);
 
@@ -608,28 +618,31 @@
                 const pct = (act/expW)*100;
                 factorSpan.innerText = pct.toFixed(1)+'%';
                 factorSpan.className =
-                  pct>=105 ? 'factor-badge bg-emerald-100 text-emerald-800' :
-                  (pct<=95 ? 'factor-badge bg-orange-100 text-orange-800' :
-                             'factor-badge bg-sky-100 text-sky-800');
+                  pct>=105 ? 'factorBadge factor-badge bg-emerald-100 text-emerald-800' :
+                  (pct<=95 ? 'factorBadge factor-badge bg-orange-100 text-orange-800' :
+                             'factorBadge factor-badge bg-sky-100 text-sky-800');
               } else {
                 factorSpan.innerText='—';
-                factorSpan.className='factor-badge bg-slate-100 text-slate-500';
+                factorSpan.className='factorBadge factor-badge bg-slate-100 text-slate-500';
               }
             } else {
               factorSpan.innerText='—';
-              factorSpan.className='factor-badge bg-slate-100 text-slate-500';
+              factorSpan.className='factorBadge factor-badge bg-slate-100 text-slate-500';
             }
           } else {
             avgSpan.innerText='—';
             factorSpan.innerText='—';
-            factorSpan.className='factor-badge bg-slate-100 text-slate-500';
+            factorSpan.className='factorBadge factor-badge bg-slate-100 text-slate-500';
           }
           autoUpdate();
         };
 
         ageInp.addEventListener('input', updateRow);
+        ageInp.addEventListener('change', updateRow);
         birdsInp.addEventListener('input', updateRow);
+        birdsInp.addEventListener('change', updateRow);
         wtInp.addEventListener('input', updateRow);
+        wtInp.addEventListener('change', updateRow);
       }
 
       for(let idx=0; idx<shed.pickups.length && idx<5; idx++){
@@ -642,121 +655,135 @@
     }
 
     function refreshAll(){
-      saveCurrentShed();
-      const shed = sheds[activeShed];
+      try {
+        saveCurrentShed();
+        const shed = sheds[activeShed];
+        if (!shed) return;
 
-      const pickups = [];
-      for(let row of pickupRows){
-        const age = parseInt(row.age.value);
-        const birds = parseInt(row.birds.value);
-        const weight = parseFloat(row.weight.value);
-        if(!isNaN(age) && age>0 && !isNaN(birds) && birds>0 && !isNaN(weight) && weight>0){
-          const exp = getAdjustedRossWeight(age, shed.dayOld);
-          if(exp) pickups.push({ birdsPicked: birds, totalWeight: weight, expectedKg: exp, actualAvg: weight/birds });
+        const pickups = [];
+        for(let row of pickupRows){
+          const age = parseInt(row.age.value);
+          const birds = parseInt(row.birds.value);
+          const weight = parseFloat(row.weight.value);
+          if(!isNaN(age) && age>0 && !isNaN(birds) && birds>0 && !isNaN(weight) && weight>0){
+            const exp = getAdjustedRossWeight(age, shed.dayOld);
+            if(exp) pickups.push({ birdsPicked: birds, totalWeight: weight, expectedKg: exp, actualAvg: weight/birds });
+          }
         }
-      }
 
-      const targetAge = getCleanoutAge(shed);
-      const res = computeShedResult(shed, pickups, targetAge, shed.dayOld);
+        const targetAge = getCleanoutAge(shed);
+        const res = computeShedResult(shed, pickups, targetAge, shed.dayOld);
 
-      document.getElementById('harvestedSum').innerHTML = res.totalHarvested.toFixed(1)+' kg';
-      document.getElementById('effectiveStart').innerHTML = res.effectiveStart.toLocaleString();
-      document.getElementById('totalPicked').innerHTML = res.totalPicked.toLocaleString();
-      document.getElementById('remainingBirds').innerHTML = res.remaining.toLocaleString();
-      document.getElementById('projectedAvg').innerHTML = res.projAvg.toFixed(2)+' kg';
-      document.getElementById('batchTotal').innerHTML = res.batchTotal.toFixed(1)+' kg';
+        document.getElementById('harvestedSum').innerHTML = res.totalHarvested.toFixed(1)+' kg';
+        document.getElementById('effectiveStart').innerHTML = res.effectiveStart.toLocaleString();
+        document.getElementById('totalPicked').innerHTML = res.totalPicked.toLocaleString();
+        document.getElementById('remainingBirds').innerHTML = res.remaining.toLocaleString();
+        document.getElementById('projectedAvg').innerHTML = res.projAvg.toFixed(2)+' kg';
+        document.getElementById('batchTotal').innerHTML = res.batchTotal.toFixed(1)+' kg';
 
-      document.getElementById('shedResultCard').classList.remove('hidden');
-      if(res.avgFactor) {
-        document.getElementById('factorMsg').innerHTML =
-          `📊 Performance factor: ${(res.avgFactor*100).toFixed(1)}% → projected ${res.projAvg.toFixed(2)} kg at age ${targetAge}d`;
-      } else {
-        document.getElementById('factorMsg').innerHTML =
-          `🌿 Using Ross baseline → ${res.projAvg.toFixed(2)} kg`;
-      }
-
-      // Farm totals
-      let farmLive = 0, farmAutoFeed = 0, farmStart = 0, farmMort = 0;
-      let totalWeightedAge = 0;
-      let totalHarvestWeight = 0;
-      let totalBirdsHarvested = 0;
-      let shedAges = [];
-
-      for(let i=0;i<SHED_COUNT;i++){
-        const s = sheds[i];
-        const sPickups = (s.pickups||[]).map(p=>({
-          birdsPicked:p.birds,
-          totalWeight:p.weight,
-          expectedKg:getAdjustedRossWeight(p.age, s.dayOld),
-          actualAvg:p.weight/p.birds
-        }));
-        const sTarget = getCleanoutAge(s);
-        const sRes = computeShedResult(s, sPickups, sTarget, s.dayOld);
-
-        farmLive += sRes.batchTotal;
-        farmAutoFeed += computeShedFeedAuto(s, sTarget);
-        farmStart += s.startBirds;
-        farmMort += s.mortalBirds;
-
-        shedAges.push({shed:i+1, age:sTarget, hasDates:!!(s.placeDate && s.cleanDate)});
-
-        for(let p of s.pickups){
-          totalWeightedAge += p.age * p.birds;
-          totalHarvestWeight += p.weight;
-          totalBirdsHarvested += p.birds;
+        document.getElementById('shedResultCard').classList.remove('hidden');
+        const factorMsgEl = document.getElementById('factorMsg');
+        if(res.avgFactor) {
+          factorMsgEl.innerHTML =
+            `📊 Performance factor: ${(res.avgFactor*100).toFixed(1)}% → projected ${res.projAvg.toFixed(2)} kg at age ${targetAge}d`;
+        } else {
+          factorMsgEl.innerHTML =
+            `🌿 Using Ross baseline → ${res.projAvg.toFixed(2)} kg`;
         }
-        if(sRes.remaining > 0){
-          totalWeightedAge += sTarget * sRes.remaining;
-          const finalWeight = sRes.projAvg * sRes.remaining;
-          totalHarvestWeight += finalWeight;
-          totalBirdsHarvested += sRes.remaining;
+
+        // Farm totals (all sheds)
+        let farmLive = 0, farmAutoFeed = 0, farmStart = 0, farmMort = 0;
+        let totalWeightedAge = 0;
+        let totalHarvestWeight = 0;
+        let totalBirdsHarvested = 0;
+        let shedAges = [];
+
+        for(let i=0;i<SHED_COUNT;i++){
+          const s = sheds[i];
+          const sPickups = (s.pickups||[]).map(p=>({
+            birdsPicked:p.birds,
+            totalWeight:p.weight,
+            expectedKg:getAdjustedRossWeight(p.age, s.dayOld),
+            actualAvg:p.weight/p.birds
+          }));
+          const sTarget = getCleanoutAge(s);
+          const sRes = computeShedResult(s, sPickups, sTarget, s.dayOld);
+
+          farmLive += sRes.batchTotal;
+          farmAutoFeed += computeShedFeedAuto(s, sTarget);
+          farmStart += s.startBirds;
+          farmMort += s.mortalBirds;
+
+          shedAges.push({shed:i+1, age:sTarget, hasDates:!!(s.placeDate && s.cleanDate)});
+
+          for(let p of s.pickups){
+            totalWeightedAge += p.age * p.birds;
+            totalHarvestWeight += p.weight;
+            totalBirdsHarvested += p.birds;
+          }
+          if(sRes.remaining > 0){
+            totalWeightedAge += sTarget * sRes.remaining;
+            const finalWeight = sRes.projAvg * sRes.remaining;
+            totalHarvestWeight += finalWeight;
+            totalBirdsHarvested += sRes.remaining;
+          }
         }
+
+        const avgAgeWeighted = totalBirdsHarvested > 0 ? totalWeightedAge / totalBirdsHarvested : 0;
+        const avgHarvestWeight = totalBirdsHarvested > 0 ? totalHarvestWeight / totalBirdsHarvested : 0;
+        const avgLivePerPlaced = farmStart > 0 ? farmLive / farmStart : 0;
+        const livability = farmStart > 0 ? ((farmStart - farmMort) / farmStart) * 100 : 0;
+
+        const userFeed = parseFloat(document.getElementById('editableFeedTotal').value);
+        const totalFeed = (!isNaN(userFeed) && userFeed>0) ? userFeed : farmAutoFeed;
+
+        const fcr = totalFeed>0 && farmLive>0 ? totalFeed / farmLive : 0;
+        const alwBase = parseFloat(document.getElementById('alwBaseline').value) || 2.45;
+        const cfcrFactor = parseFloat(document.getElementById('cfcrFactor').value) || 0.27;
+        const cfcr = fcr - (avgHarvestWeight - alwBase) * cfcrFactor;
+
+        const pif = (avgAgeWeighted * fcr) > 0 ? (livability * avgHarvestWeight) / (avgAgeWeighted * fcr) * 100 : 0;
+
+        document.getElementById('totalLiveWeightFarm').innerText = farmLive.toFixed(1)+' kg';
+        document.getElementById('fcrValue').innerText = fcr.toFixed(3);
+        document.getElementById('cfcrValue').innerText = cfcr.toFixed(3);
+        document.getElementById('pifValue').innerText = pif.toFixed(1);
+        document.getElementById('livabilityPercent').innerText = livability.toFixed(2)+'%';
+        document.getElementById('avgLiveWeightFarm').innerText = avgLivePerPlaced.toFixed(2)+' kg';
+        document.getElementById('avgAgeWeighted').innerText = avgAgeWeighted.toFixed(1)+' days';
+        document.getElementById('avgHarvestWeight').innerText = avgHarvestWeight.toFixed(2)+' kg';
+        document.getElementById('alwUsed').innerText = avgHarvestWeight.toFixed(2);
+
+        if(!document.getElementById('editableFeedTotal').value) {
+          document.getElementById('editableFeedTotal').placeholder = farmAutoFeed.toFixed(0);
+        }
+
+        document.getElementById('shedAgeList').innerHTML = shedAges
+          .map(a => `<div> Shed ${a.shed}: <strong>${a.age}</strong> days ${a.hasDates ? '<span class="text-emerald-700">(custom)</span>' : '<span class="text-orange-600">(default 56)</span>'}</div>`)
+          .join('');
+
+        // autosave on refresh
+        persistState();
+      } catch (err) {
+        console.error('Error in refreshAll:', err);
+        showToast(`❌ Update failed: ${err.message}`, true);
       }
-
-      const avgAgeWeighted = totalBirdsHarvested > 0 ? totalWeightedAge / totalBirdsHarvested : 0;
-      const avgHarvestWeight = totalBirdsHarvested > 0 ? totalHarvestWeight / totalBirdsHarvested : 0;
-      const avgLivePerPlaced = farmStart > 0 ? farmLive / farmStart : 0;
-      const livability = farmStart > 0 ? ((farmStart - farmMort) / farmStart) * 100 : 0;
-
-      const userFeed = parseFloat(document.getElementById('editableFeedTotal').value);
-      const totalFeed = (!isNaN(userFeed) && userFeed>0) ? userFeed : farmAutoFeed;
-
-      const fcr = totalFeed>0 && farmLive>0 ? totalFeed / farmLive : 0;
-      const alwBase = parseFloat(document.getElementById('alwBaseline').value) || 2.45;
-      const cfcrFactor = parseFloat(document.getElementById('cfcrFactor').value) || 0.27;
-      const cfcr = fcr - (avgHarvestWeight - alwBase) * cfcrFactor;
-
-      const pif = (avgAgeWeighted * fcr) > 0 ? (livability * avgHarvestWeight) / (avgAgeWeighted * fcr) * 100 : 0;
-
-      document.getElementById('totalLiveWeightFarm').innerText = farmLive.toFixed(1)+' kg';
-      document.getElementById('fcrValue').innerText = fcr.toFixed(3);
-      document.getElementById('cfcrValue').innerText = cfcr.toFixed(3);
-      document.getElementById('pifValue').innerText = pif.toFixed(1);
-      document.getElementById('livabilityPercent').innerText = livability.toFixed(2)+'%';
-      document.getElementById('avgLiveWeightFarm').innerText = avgLivePerPlaced.toFixed(2)+' kg';
-      document.getElementById('avgAgeWeighted').innerText = avgAgeWeighted.toFixed(1)+' days';
-      document.getElementById('avgHarvestWeight').innerText = avgHarvestWeight.toFixed(2)+' kg';
-      document.getElementById('alwUsed').innerText = avgHarvestWeight.toFixed(2);
-
-      if(!document.getElementById('editableFeedTotal').value) {
-        document.getElementById('editableFeedTotal').placeholder = farmAutoFeed.toFixed(0);
-      }
-
-      document.getElementById('shedAgeList').innerHTML = shedAges
-        .map(a => `<div> Shed ${a.shed}: <strong>${a.age}</strong> days ${a.hasDates ? '<span class="text-emerald-700">(custom)</span>' : '<span class="text-orange-600">(default 56)</span>'}</div>`)
-        .join('');
-
-      // autosave on refresh
-      persistState();
     }
 
     function autoUpdate(){
       if(autoUpdateTimer) clearTimeout(autoUpdateTimer);
-      autoUpdateTimer = setTimeout(refreshAll, 120);
+      autoUpdateTimer = setTimeout(() => {
+        try { refreshAll(); }
+        catch (e) {
+          console.error(e);
+          showToast('Auto-refresh error', true);
+        }
+      }, 120);
     }
 
     function buildShedTabs(){
       const container = document.getElementById('shedTabsContainer');
+      if (!container) return;
       container.innerHTML = '';
       for(let i=0;i<SHED_COUNT;i++){
         const btn = document.createElement('button');
@@ -878,33 +905,17 @@
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
 
-    document.getElementById('calculateBtn').addEventListener('click', ()=>{
-      saveCurrentShed();
-      refreshAll();
-    });
-
-    document.getElementById('resetShedBtn').addEventListener('click', ()=>{
-      if(confirm(`Reset Shed ${activeShed+1}?`)){
-        startBirdsInput.value = "1000";
-        mortalBirdsInput.value = "40";
-        dayOldInput.value = "0.044";
-        placeDateInput.value = "";
-        cleanDateInput.value = "";
-        for(let r of pickupRows){
-          r.age.value=""; r.birds.value=""; r.weight.value="";
-          r.age.dispatchEvent(new Event('input'));
-        }
-        saveCurrentShed();
-        refreshAll();
-      }
-    });
-
     document.getElementById('editableFeedTotal').addEventListener('input', autoUpdate);
+    document.getElementById('editableFeedTotal').addEventListener('change', autoUpdate);
     document.getElementById('alwBaseline').addEventListener('input', autoUpdate);
+    document.getElementById('alwBaseline').addEventListener('change', autoUpdate);
     document.getElementById('cfcrFactor').addEventListener('input', autoUpdate);
+    document.getElementById('cfcrFactor').addEventListener('change', autoUpdate);
 
-    [startBirdsInput, mortalBirdsInput, dayOldInput, placeDateInput, cleanDateInput]
-      .forEach(inp => inp.addEventListener('input', autoUpdate));
+    function bindAuto(el){
+      ['input','change'].forEach(ev => el.addEventListener(ev, autoUpdate));
+    }
+    [startBirdsInput, mortalBirdsInput, dayOldInput, placeDateInput, cleanDateInput].forEach(bindAuto);
 
     document.getElementById("saveLocalBtn").addEventListener("click", ()=>{
       persistState();
@@ -922,7 +933,7 @@
     });
 
     // Boot
-    const restored = restoreState(); // try local restore first
+    const restored = restoreState();
     buildShedTabs();
     loadShedToUI(activeShed || 0);
     refreshAll();
