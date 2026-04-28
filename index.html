@@ -2252,6 +2252,18 @@ function triggerExcelImport(){
         return s === "true" || s === "yes" || s === "1" || s === "y";
       };
 
+      // Helper to detect if a cleanout value is truly invalid (empty, zero, Excel zero-date)
+      function isInvalidCleanout(rawValue) {
+        if (!rawValue) return true;
+        if (typeof rawValue === 'number' && rawValue === 0) return true;
+        const str = String(rawValue).trim();
+        if (str === '' || str === '0/1/1900' || str === '1/1/1900' || str === '1900-01-01') return true;
+        // Also treat parsed null as invalid
+        const parsed = parseExcelDateDMY(rawValue);
+        if (!parsed) return true;
+        return false;
+      }
+
       let importedBatch = "";
       let updated = 0;
       let skipped = 0;
@@ -2271,13 +2283,23 @@ function triggerExcelImport(){
         const mortRaw      = getVal(r, ["Mortality", "MortalityCount", "Mortality Count", "TotalMortality"]);
 
         const placement = parseExcelDateDMY(placementRaw);
-        const cleanout  = parseExcelDateDMY(cleanoutRaw);
         const pop       = Number(popRaw);
         const mort      = Number(mortRaw);
 
         if (placement) sheds[idx].placementDate = placement;
         if (Number.isFinite(pop) && pop > 0) sheds[idx].initialPopulation = Math.floor(pop);
-        sheds[idx].cleanoutDate = cleanout ?? null;
+        
+        // ----- Cleanout date logic: invalid -> placement + 52 days -----
+        let cleanoutDate = null;
+        if (placement && isInvalidCleanout(cleanoutRaw)) {
+          // invalid or empty cleanout: use placement + 52 days
+          cleanoutDate = addDays(placement, 52);
+        } else {
+          // try to parse normally
+          cleanoutDate = parseExcelDateDMY(cleanoutRaw);
+        }
+        sheds[idx].cleanoutDate = cleanoutDate;
+        
         if (Number.isFinite(mort)) sheds[idx].mortality = Math.floor(mort);
 
         // reset reverse snapshot
@@ -2286,63 +2308,63 @@ function triggerExcelImport(){
 
         // pickups 1..5
         const pickups = [];
-for (let p=1;p<=5;p++){
-  const dRaw = getVal(r, [`Pickup${p}Date`, `Pickup ${p} Date`, `P${p}Date`, `P${p} Date`]);
-  const bRaw = getVal(r, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
-  const fRaw = getVal(r, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
-  const vRaw = getVal(r, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
+        for (let p=1; p<=5; p++){
+          const dRaw = getVal(r, [`Pickup${p}Date`, `Pickup ${p} Date`, `P${p}Date`, `P${p} Date`]);
+          const bRaw = getVal(r, [`Pickup${p}Birds`, `Pickup ${p} Birds`, `P${p}Birds`, `P${p} Birds`]);
+          const fRaw = getVal(r, [`Pickup${p}Final`, `Pickup ${p} Final`, `P${p}Final`]);
+          const vRaw = getVal(r, [`Pickup${p}Variance`, `Pickup ${p} Variance`, `P${p}Variance`]);
 
-  const d = parseExcelDateDMY(dRaw) || (typeof dRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dRaw) ? parseISO(dRaw) : null);
-  const b = Number(bRaw);
-  const isFinal = parseBool(fRaw);
-  const variance = Number(vRaw);
+          const d = parseExcelDateDMY(dRaw) || (typeof dRaw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dRaw) ? parseISO(dRaw) : null);
+          const b = Number(bRaw);
+          const isFinal = parseBool(fRaw);
+          const variance = Number(vRaw);
 
-  if (d && Number.isFinite(b) && b > 0) {
-    pickups.push({
-      date: d,
-      birds: Math.floor(b),
-      isFinal: !!isFinal,
-      variance: Number.isFinite(variance) ? variance : null
-    });
-  }
-}
+          if (d && Number.isFinite(b) && b > 0) {
+            pickups.push({
+              date: d,
+              birds: Math.floor(b),
+              isFinal: !!isFinal,
+              variance: Number.isFinite(variance) ? variance : null
+            });
+          }
+        }
 
-// Helper function to compute variance
-function computeVarianceForPickup(shed, pickupDate, pickupBirds, allPickups) {
-  const prevTotal = allPickups
-    .filter(p => dateOnly(p.date) < dateOnly(pickupDate))
-    .reduce((sum, p) => sum + p.birds, 0);
-  const expectedLive = shed.initialPopulation - prevTotal - shed.mortality;
-  return pickupBirds - expectedLive;
-}
+        // Helper function to compute variance (already defined, but kept for clarity)
+        function computeVarianceForPickup(shed, pickupDate, pickupBirds, allPickups) {
+          const prevTotal = allPickups
+            .filter(p => dateOnly(p.date) < dateOnly(pickupDate))
+            .reduce((sum, p) => sum + p.birds, 0);
+          const expectedLive = shed.initialPopulation - prevTotal - shed.mortality;
+          return pickupBirds - expectedLive;
+        }
 
-// Auto‑final + auto‑variance for 5th pickup
-if (pickups.length === 5 && !pickups.some(p => p.isFinal)) {
-  pickups[4].isFinal = true;
-  if (pickups[4].variance == null || pickups[4].variance === 0) {
-    pickups[4].variance = computeVarianceForPickup(sheds[idx], pickups[4].date, pickups[4].birds, pickups);
-  }
-}
+        // Auto‑final + auto‑variance for 5th pickup
+        if (pickups.length === 5 && !pickups.some(p => p.isFinal)) {
+          pickups[4].isFinal = true;
+          if (pickups[4].variance == null || pickups[4].variance === 0) {
+            pickups[4].variance = computeVarianceForPickup(sheds[idx], pickups[4].date, pickups[4].birds, pickups);
+          }
+        }
 
-pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
+        pickups.sort((a,b)=>dateOnly(a.date)-dateOnly(b.date));
 
-// Ensure only one final pickup
-let finalSeen = false;
-for (const p of pickups){
-  if (p.isFinal && !finalSeen) finalSeen = true;
-  else if (p.isFinal && finalSeen) p.isFinal = false;
-}
-sheds[idx].pickups = pickups.slice(0,5);
+        // Ensure only one final pickup
+        let finalSeen = false;
+        for (const p of pickups){
+          if (p.isFinal && !finalSeen) finalSeen = true;
+          else if (p.isFinal && finalSeen) p.isFinal = false;
+        }
+        sheds[idx].pickups = pickups.slice(0,5);
 
-// Final pickup handling: set cleanout and recalc mortality
-const fp = sheds[idx].pickups.find(x => x.isFinal);
-if (fp) {
-  sheds[idx].cleanoutDate = dateOnly(fp.date);
-  const totalPicked = sheds[idx].pickups.reduce((sum, p) => sum + p.birds, 0);
-  sheds[idx].mortality = Math.max(0, sheds[idx].initialPopulation - totalPicked);
-  sheds[idx].prevMortalityBeforeFinal = null;
-  sheds[idx].prevCleanoutBeforeFinal = null;
-}
+        // Final pickup handling: set cleanout and recalc mortality
+        const fp = sheds[idx].pickups.find(x => x.isFinal);
+        if (fp) {
+          sheds[idx].cleanoutDate = dateOnly(fp.date);
+          const totalPicked = sheds[idx].pickups.reduce((sum, p) => sum + p.birds, 0);
+          sheds[idx].mortality = Math.max(0, sheds[idx].initialPopulation - totalPicked);
+          sheds[idx].prevMortalityBeforeFinal = null;
+          sheds[idx].prevCleanoutBeforeFinal = null;
+        }
 
         updated++;
       }
@@ -2360,55 +2382,6 @@ if (fp) {
     
   };
 })();
-fetchWeather();
-setInterval(fetchWeather, 30 * 60 * 1000);
-async function exportExcel(){
-  if (typeof XLSX === "undefined") return alert("Export failed: XLSX library not loaded.");
-
-  const fileName = `KiriparkFarmManager_${iso(new Date())}.xlsx`;
-  const wb = XLSX.utils.book_new();
-
-  const shedRows = sheds.map(s => {
-    const row = {
-      Shed: s.id,
-      BatchNumber: batchNumber || "",
-      PlacementDate: fmtDateDMY(s.placementDate),
-      InitialPopulation: Math.floor(Number(s.initialPopulation || 0)),
-      Mortality: Math.floor(Number(s.mortality || 0)),
-      CleanoutDate: s.cleanoutDate ? fmtDateDMY(s.cleanoutDate) : ""
-    };
-
-    for (let i=1;i<=5;i++){
-      const p = s.pickups?.[i-1];
-      row[`Pickup${i}Date`] = p?.date ? fmtDateDMY(p.date) : "";
-      row[`Pickup${i}Birds`] = p?.birds ? Math.floor(p.birds) : "";
-      row[`Pickup${i}Final`] = p?.isFinal ? "TRUE" : "";
-      row[`Pickup${i}Variance`] = (p?.variance != null && Number.isFinite(Number(p.variance))) ? Number(p.variance) : "";
-    }
-    return row;
-  });
-
-  const wsSheds = XLSX.utils.json_to_sheet(shedRows);
-  XLSX.utils.book_append_sheet(wb, wsSheds, "Sheds");
-
-  try {
-    XLSX.writeFile(wb, fileName);
-  } catch (err) {
-    console.warn("XLSX.writeFile failed; using Blob fallback:", err);
-    const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([arrayBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-}
 </script>
 
 </body>
