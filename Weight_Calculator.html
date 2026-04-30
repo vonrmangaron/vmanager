@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>ProdWeight.VM</title>
+    <title>ProdWeight.VM - Ross 308 Performance with Daily Intake</title>
     <!-- Tailwind CSS v3 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -11,17 +11,15 @@
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     <style>
-        body { background-image: url('images/Broiler-free-range.png');
-              font-family: 'Inter', system-ui, -apple-system, sans-serif}
-        .transition-smooth { transition: all 0.2s ease; }
-        .card-column {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        body {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d1d5db20"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>');
+            background-size: 28px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
+        .transition-smooth { transition: all 0.2s ease; }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased bg-stone-100/60">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-5 py-6 md:py-8">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200/80 overflow-hidden">
@@ -31,13 +29,13 @@
                 <div>
                     <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-3">
                         🧬 ProdWeight.VM
-                        <span class="bg-amber-400 text-stone-950 text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-full">Live DOC scaling</span>
+                        <span class="bg-amber-400 text-stone-950 text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-full">Live DOC scaling + intake table</span>
                     </h1>
-                    <p class="text-emerald-100 text-sm mt-1 font-medium">Adjustable day-old weight · proportional growth trajectory (0–55d)</p>
+                    <p class="text-emerald-100 text-sm mt-1 font-medium">Adjustable day-old weight · proportional growth · original daily intake (g) from trial</p>
                 </div>
                 <div class="text-stone-300 text-xs flex items-center gap-2 bg-stone-800/60 backdrop-blur-sm px-3 py-1.5 rounded-full">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Data from original photo | responsive 4‑column view
+                    Ross 308 · 0–55d | intake unscaled
                 </div>
             </div>
             
@@ -60,7 +58,7 @@
                         <span id="scaleFactorBadge" class="font-mono font-bold">1.000x</span>
                     </div>
                 </div>
-                <div class="text-[11px] text-stone-400 bg-stone-50 px-3 py-1 rounded-full">📐 all weights scale proportionally · intake/FCR remain original reference</div>
+                <div class="text-[11px] text-stone-400 bg-stone-50 px-3 py-1 rounded-full">📐 weights scale proportionally · intake/FCR remain original reference values</div>
             </div>
             
             <!-- KPI Stats Ribbon (dynamic based on scaled data) -->
@@ -70,7 +68,7 @@
                 <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Total gain</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="totalGainStat">— g</span></div>
                 <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Avg daily gain</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="avgDailyGainStat">— g/d</span></div>
                 <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Peak daily gain</span><span class="bg-white text-emerald-900 font-bold px-3 py-0.5 rounded-full text-sm shadow-sm" id="peakGainStat">— g</span></div>
-                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">FCR (table)</span><span class="bg-white text-stone-700 font-semibold px-3 py-0.5 rounded-full text-xs shadow-sm" id="fcrRefStat">1.793</span></div>
+                <div class="flex items-baseline gap-2"><span class="text-emerald-800 font-bold text-xs uppercase">Final FCR (table)</span><span class="bg-white text-stone-700 font-semibold px-3 py-0.5 rounded-full text-xs shadow-sm" id="fcrRefStat">1.793</span></div>
             </div>
             
             <!-- Double chart: Weight + Daily gain (updated dynamically) -->
@@ -93,21 +91,21 @@
                 </div>
             </div>
             
-            <!-- 4-COLUMN CARD LAYOUT (no scrollbars, daily gain removed from table) -->
+            <!-- 4-COLUMN CARD LAYOUT (Weight + Daily Intake from original trial) -->
             <div class="px-5 md:px-8 pt-6 pb-10 bg-white">
                 <div class="flex flex-wrap justify-between items-center mb-5 gap-2">
                     <h3 class="text-sm font-extrabold text-gray-800 flex items-center gap-2">
                         <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                        Daily performance · 4‑column view (scaled weight)
+                        Daily performance · 4‑column view (scaled weight + original daily intake)
                     </h3>
-                    <div class="text-[11px] font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">📌 each card = sequential days | highlights weekly endpoints | daily gain removed</div>
+                    <div class="text-[11px] font-medium text-stone-500 bg-stone-100 px-2.5 py-1 rounded-full">📌 intake from attached reference table (unscaled, g/day)</div>
                 </div>
                 <div id="fourColumnGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-fr">
-                    <!-- JS fills columns dynamically, no scrollbars, weight only -->
+                    <!-- JS fills columns dynamically: shows weight (scaled) + original daily intake -->
                 </div>
                 <div class="text-[11px] text-stone-400 mt-5 pt-2 border-t border-gray-100 flex justify-between flex-wrap gap-2">
                     <span>🐣 Weight recalculated based on user-defined DOC (proportional scaling). Original baseline DOC = 44g.</span>
-                    <span class="font-mono text-emerald-700">⚡ Daily gain chart & statistics remain interactive — table shows weight only</span>
+                    <span class="font-mono text-emerald-700">📋 Daily intake (g) as per As-Hatched table — unchanged & original</span>
                 </div>
             </div>
             
@@ -115,9 +113,9 @@
             <div class="bg-gray-50 border-t border-gray-100 px-6 md:px-8 py-4 flex flex-wrap justify-between items-center gap-3 text-xs text-gray-500">
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-emerald-100 border-l-2 border-emerald-600"></div><span>Ross 308 · Actual trial (D0–55) </span></div>
-                    <div class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg><span>Scaling preserves relative growth pattern</span></div>
+                    <div class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg><span>Scaling preserves relative growth pattern | intake static</span></div>
                 </div>
-                <div class="text-gray-400">Aviagen® lineage | interactive DOC simulator · clean table without daily gain</div>
+                <div class="text-gray-400">Aviagen® lineage · interactive DOC simulator · includes daily intake (g) per day from original dataset</div>
             </div>
         </div>
     </div>
@@ -132,12 +130,23 @@
                 655, 720, 789, 860, 935, 1012, 1092, 1174, 1258, 1345, 1434, 1524, 1616, 1710,
                 1805, 1901, 1999, 2097, 2196, 2296, 2396, 2496, 2597, 2697, 2798, 2898, 2998,
                 3097, 3197, 3295, 3393, 3490, 3586, 3681, 3776, 3869, 3961, 4052, 4142, 4230
-            ];  // length = 56 (days 0 to 55)
+            ];  // length 56 (days 0 to 55)
+            
+            // DAILY INTAKE (g) from original As-Hatched table: day 1 to day 55 exactly as per image
+            // Index mapping: intakeForDay[day] where day from 0..55. day0 has no intake -> null
+            const ORIGINAL_DAILY_INTAKE = [
+                null,   // day 0
+                16, 20, 24, 27, 31, 35, 39, 44, 48, 52, 57, 62, 67, 72, 77, 83, 88, 94, 100,
+                105, 111, 117, 122, 128, 134, 139, 145, 150, 156, 161, 166, 171, 176, 180,
+                185, 189, 193, 197, 201, 204, 207, 211, 213, 216, 219, 221, 223, 225, 227,
+                229, 231, 233, 235, 237, 239
+            ];  // length 56 (index 0 null, index 1..55 values)
+            
             const ORIGINAL_DOC = 44.0;
             const TOTAL_DAYS = BASELINE_WEIGHTS.length - 1; // 55
             
-            // Static reference values for other metrics (intake, FCR) — for display only in stats
-            const ORIGINAL_FCR_TABLE_END = 1.793;  // final FCR from photo
+            // Reference FCR final from photo
+            const ORIGINAL_FCR_TABLE_END = 1.793;
             
             // DOM elements
             const docNumberInput = document.getElementById('docWeightInput');
@@ -157,9 +166,7 @@
                 if (isNaN(safeDoc)) safeDoc = ORIGINAL_DOC;
                 safeDoc = Math.min(75, Math.max(30, safeDoc));
                 const scale = safeDoc / ORIGINAL_DOC;
-                // scale all baseline weights
                 const scaled = BASELINE_WEIGHTS.map(w => w * scale);
-                // compute daily gain (day0 gain = 0)
                 const gains = [0];
                 for (let i = 1; i < scaled.length; i++) {
                     gains.push(scaled[i] - scaled[i-1]);
@@ -167,43 +174,82 @@
                 return { scaledWeights: scaled, dailyGains: gains, scaleFactor: scale };
             }
             
-            // Update all UI: stats, charts, 4-column grid
-            function updateAll() {
-                let docValue = parseFloat(docNumberInput.value);
-                if (isNaN(docValue)) docValue = ORIGINAL_DOC;
-                docValue = Math.min(75, Math.max(30, docValue));
-                docNumberInput.value = docValue.toFixed(1);
-                docSlider.value = docValue;
-                
-                const { scaledWeights, dailyGains, scaleFactor } = computeScaledData(docValue);
-                currentScaledWeights = scaledWeights;
-                currentDailyGains = dailyGains;
-                
-                // update scale badge
-                scaleSpan.innerText = scaleFactor.toFixed(4) + 'x';
-                
-                // KPI update
-                const finalWeight = scaledWeights[scaledWeights.length-1];
-                const totalGain = finalWeight - docValue;
-                const avgDailyGain = totalGain / TOTAL_DAYS;
-                const maxGain = Math.max(...dailyGains.slice(1));
-                const peakDayIndex = dailyGains.indexOf(maxGain);
-                document.getElementById('docWeightStat').innerHTML = `${docValue.toFixed(1)} g`;
-                document.getElementById('finalWeightStat').innerHTML = `${finalWeight.toFixed(1)} g`;
-                document.getElementById('totalGainStat').innerHTML = `${totalGain.toFixed(1)} g`;
-                document.getElementById('avgDailyGainStat').innerHTML = `${avgDailyGain.toFixed(1)} g/d`;
-                document.getElementById('peakGainStat').innerHTML = `${maxGain.toFixed(1)} g (day ${peakDayIndex})`;
-                document.getElementById('fcrRefStat').innerHTML = `${ORIGINAL_FCR_TABLE_END.toFixed(3)} (ref)`;
-                
-                // update charts
-                updateCharts(scaledWeights, dailyGains);
-                // render 4-column grid (NO daily gain inside cards, NO scrollbars)
-                renderFourColumnGrid(scaledWeights, dailyGains);
+            // Helper: get formatted intake string for a given day
+            function getIntakeDisplay(day) {
+                if (day === 0 || !ORIGINAL_DAILY_INTAKE[day]) return "—";
+                const intakeVal = ORIGINAL_DAILY_INTAKE[day];
+                return `${intakeVal} g`;
             }
             
-            // CHARTS: weight line + daily gain bar
+            // Render 4-column grid: weight (scaled) + original daily intake, NO scrollbars, NO daily gain column
+            function renderFourColumnGrid(weights) {
+                const container = document.getElementById('fourColumnGrid');
+                if (!container) return;
+                const totalDays = weights.length; // 56 entries (0..55)
+                // Define 4 sequential day ranges exactly covering 0-55
+                const ranges = [
+                    { name: "Days 0 – 13", start: 0, end: 13 },
+                    { name: "Days 14 – 27", start: 14, end: 27 },
+                    { name: "Days 28 – 41", start: 28, end: 41 },
+                    { name: "Days 42 – 55", start: 42, end: 55 }
+                ];
+                
+                container.innerHTML = '';
+                
+                for (let r of ranges) {
+                    const columnDiv = document.createElement('div');
+                    columnDiv.className = 'bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md';
+                    
+                    const header = document.createElement('div');
+                    header.className = 'bg-gradient-to-r from-emerald-50 to-stone-50 px-3 py-2.5 text-center font-extrabold text-xs uppercase tracking-wider text-emerald-800 border-b border-gray-200';
+                    header.textContent = r.name;
+                    columnDiv.appendChild(header);
+                    
+                    // list container: no scrollbars, no overflow restrictions
+                    const listContainer = document.createElement('div');
+                    listContainer.className = 'divide-y divide-gray-100';
+                    
+                    for (let day = r.start; day <= r.end && day < totalDays; day++) {
+                        const weightVal = weights[day];
+                        const intakeDisplay = getIntakeDisplay(day);
+                        // highlight weekly endpoints (day 7,14,21,28,35,42,49,55) and day 0 not emphasized unless 0
+                        const isWeekly = (day !== 0 && (day % 7 === 0 || day === 55));
+                        
+                        const row = document.createElement('div');
+                        row.className = `flex justify-between items-center px-3 py-2.5 transition ${isWeekly ? 'bg-emerald-50/70 border-l-4 border-emerald-500' : 'hover:bg-gray-50'}`;
+                        
+                        // Left: day badge
+                        const daySpan = document.createElement('span');
+                        daySpan.className = `text-xs font-mono font-bold px-2 py-0.5 rounded-full ${isWeekly ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-100 text-gray-700'}`;
+                        daySpan.textContent = `Day ${day}`;
+                        
+                        // Right side container: weight + intake stacked or inline flex
+                        const rightInfo = document.createElement('div');
+                        rightInfo.className = 'flex items-baseline gap-3 flex-wrap justify-end';
+                        
+                        const weightSpan = document.createElement('span');
+                        weightSpan.className = `text-sm font-bold ${isWeekly ? 'text-emerald-800' : 'text-gray-800'} tracking-tight`;
+                        weightSpan.textContent = `${weightVal.toFixed(1)} g`;
+                        
+                        const intakeSpan = document.createElement('span');
+                        intakeSpan.className = `text-xs font-medium ${isWeekly ? 'text-emerald-700/80' : 'text-stone-500'} bg-white/60 px-1.5 py-0.5 rounded-md`;
+                        intakeSpan.innerHTML = `🍽️ ${intakeDisplay}`;
+                        
+                        rightInfo.appendChild(weightSpan);
+                        rightInfo.appendChild(intakeSpan);
+                        
+                        row.appendChild(daySpan);
+                        row.appendChild(rightInfo);
+                        listContainer.appendChild(row);
+                    }
+                    columnDiv.appendChild(listContainer);
+                    container.appendChild(columnDiv);
+                }
+            }
+            
+            // Update charts (weight line + daily gain bar)
             function updateCharts(weights, gains) {
-                const daysLabels = Array.from({length: weights.length}, (_, i) => i); // 0..55
+                const daysLabels = Array.from({length: weights.length}, (_, i) => i);
                 // Weight chart
                 if (weightChart) weightChart.destroy();
                 const ctxWeight = document.getElementById('weightChart').getContext('2d');
@@ -238,7 +284,7 @@
                     }
                 });
                 
-                // Daily gain chart (bar) skip day0 (gain 0)
+                // Daily gain chart (bar, skip day0)
                 const gainLabels = daysLabels.slice(1);
                 const gainValues = gains.slice(1);
                 if (dailyGainChart) dailyGainChart.destroy();
@@ -270,64 +316,47 @@
                 });
             }
             
-            // 4-COLUMN RESPONSIVE GRID: split days into 4 blocks, NO scrollbars, NO daily gain values.
-            // Removed max-h / overflow-y-auto classes, removed gainSpan entirely.
-            function renderFourColumnGrid(weights, gains) {
-                const container = document.getElementById('fourColumnGrid');
-                if (!container) return;
-                
-                const totalDays = weights.length; // 56 entries (0..55)
-                // define ranges
-                const ranges = [
-                    { name: "Days 0 – 13", start: 0, end: 13 },
-                    { name: "Days 14 – 27", start: 14, end: 27 },
-                    { name: "Days 28 – 41", start: 28, end: 41 },
-                    { name: "Days 42 – 55", start: 42, end: 55 }
-                ];
-                
-                container.innerHTML = '';
-                
-                for (let r of ranges) {
-                    const columnDiv = document.createElement('div');
-                    columnDiv.className = 'bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all hover:shadow-md';
-                    
-                    const header = document.createElement('div');
-                    header.className = 'bg-gradient-to-r from-emerald-50 to-stone-50 px-3 py-2.5 text-center font-extrabold text-xs uppercase tracking-wider text-emerald-800 border-b border-gray-200';
-                    header.textContent = r.name;
-                    columnDiv.appendChild(header);
-                    
-                    // listContainer: NO scrollbars, NO max-height, NO overflow-y-auto
-                    const listContainer = document.createElement('div');
-                    listContainer.className = 'divide-y divide-gray-100';   // scrollbar removed: no overflow wrapper
-                    
-                    for (let day = r.start; day <= r.end && day < totalDays; day++) {
-                        const weightVal = weights[day];
-                        // highlighting weekly endpoints (day 7,14,21,28,35,42,49,55) and day 0 is excluded from highlight pattern.
-                        const isWeekly = (day !== 0 && (day % 7 === 0 || day === 55));
-                        
-                        const row = document.createElement('div');
-                        row.className = `flex justify-between items-center px-3 py-2.5 transition ${isWeekly ? 'bg-emerald-50/60 border-l-4 border-emerald-500' : 'hover:bg-gray-50'}`;
-                        
-                        const daySpan = document.createElement('span');
-                        daySpan.className = `text-xs font-mono font-bold px-2 py-0.5 rounded-full ${isWeekly ? 'bg-emerald-200 text-emerald-900' : 'bg-gray-100 text-gray-700'}`;
-                        daySpan.textContent = `Day ${day}`;
-                        
-                        // weight only — daily gain intentionally omitted per requirement
-                        const weightSpan = document.createElement('span');
-                        weightSpan.className = `text-sm font-bold ${isWeekly ? 'text-emerald-800' : 'text-gray-800'} tracking-tight`;
-                        weightSpan.textContent = `${weightVal.toFixed(1)} g`;
-                        
-                        row.appendChild(daySpan);
-                        row.appendChild(weightSpan);
-                        listContainer.appendChild(row);
-                    }
-                    
-                    columnDiv.appendChild(listContainer);
-                    container.appendChild(columnDiv);
-                }
+            // Update stats ribbon based on scaled data & original FCR
+            function updateStats(docValue, scaledWeights, dailyGains) {
+                const finalWeight = scaledWeights[scaledWeights.length-1];
+                const totalGain = finalWeight - docValue;
+                const avgDailyGain = totalGain / TOTAL_DAYS;
+                const maxGain = Math.max(...dailyGains.slice(1));
+                const peakDayIndex = dailyGains.indexOf(maxGain);
+                document.getElementById('docWeightStat').innerHTML = `${docValue.toFixed(1)} g`;
+                document.getElementById('finalWeightStat').innerHTML = `${finalWeight.toFixed(1)} g`;
+                document.getElementById('totalGainStat').innerHTML = `${totalGain.toFixed(1)} g`;
+                document.getElementById('avgDailyGainStat').innerHTML = `${avgDailyGain.toFixed(1)} g/d`;
+                document.getElementById('peakGainStat').innerHTML = `${maxGain.toFixed(1)} g (day ${peakDayIndex})`;
+                document.getElementById('fcrRefStat').innerHTML = `${ORIGINAL_FCR_TABLE_END.toFixed(3)} (ref)`;
             }
             
-            // Sync between number and slider
+            // Main UI update: recalc, charts, grid, stats
+            function updateAll() {
+                let docValue = parseFloat(docNumberInput.value);
+                if (isNaN(docValue)) docValue = ORIGINAL_DOC;
+                docValue = Math.min(75, Math.max(30, docValue));
+                docNumberInput.value = docValue.toFixed(1);
+                docSlider.value = docValue;
+                
+                const { scaledWeights, dailyGains, scaleFactor } = computeScaledData(docValue);
+                currentScaledWeights = scaledWeights;
+                currentDailyGains = dailyGains;
+                
+                // update scale badge
+                scaleSpan.innerText = scaleFactor.toFixed(4) + 'x';
+                
+                // update stats panel
+                updateStats(docValue, scaledWeights, dailyGains);
+                
+                // update charts (weight & daily gain)
+                updateCharts(scaledWeights, dailyGains);
+                
+                // render four-column grid: includes weight (scaled) + original daily intake (static)
+                renderFourColumnGrid(scaledWeights);
+            }
+            
+            // Sync between number input and slider
             function syncInputs(value) {
                 let v = parseFloat(value);
                 if (isNaN(v)) v = ORIGINAL_DOC;
@@ -341,10 +370,10 @@
             docNumberInput.addEventListener('input', (e) => syncInputs(e.target.value));
             docSlider.addEventListener('input', (e) => syncInputs(e.target.value));
             
-            // Initialize with baseline doc = 44g
+            // initial render with baseline DOC = 44g
             syncInputs(44);
             
-            // optional: resize charts if needed
+            // ensure charts resize on window resize
             window.addEventListener('resize', () => {
                 if (weightChart) weightChart.resize();
                 if (dailyGainChart) dailyGainChart.resize();
