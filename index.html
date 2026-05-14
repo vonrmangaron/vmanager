@@ -253,7 +253,7 @@ const ROSS_308_FEED_INTAKE = {
   41:192,42:197,43:201,44:206,45:211,46:215,47:220,48:223,49:225,50:227,
   51:229,52:230,53:231,54:233,55:233,56:234,57:234,58:234,59:234,60:234
 };
-
+const DAILY_MORTALITY_RATE = 0.001;   // 0.10% per day
 /* =========================================================
    Date helpers (timezone-safe)
 ========================================================= */
@@ -351,13 +351,45 @@ function populationOnDate(shed, onDate){
   pop -= mortalityAppliedOnDate(shed, d);
   return pop;
 }
+function populationOnDateWithDailyMortality(shed, onDate){
+  const d = dateOnly(onDate);
+  const cleanout = effectiveCleanoutDate(shed);
+  if (cleanout && d > dateOnly(cleanout)) return 0;
+
+  let pop = shed.initialPopulation;
+  let cur = dateOnly(shed.placementDate);
+
+  // simulate up to the day before the target date
+  while (cur < d) {
+    // subtract any pickups on this day
+    const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(cur));
+    const pickedToday = pickupsToday.reduce((sum, p) => sum + p.birds, 0);
+    pop -= pickedToday;
+    if (pop < 0) pop = 0;
+
+    // apply daily mortality at the end of the day
+    const mort = Math.floor(pop * DAILY_MORTALITY_RATE);
+    pop -= mort;
+    if (pop < 0) pop = 0;
+
+    cur = addDays(cur, 1);
+  }
+
+  // subtract pickups that occur on the target day (before feeding)
+  const pickupsToday = (shed.pickups || []).filter(p => iso(p.date) === iso(d));
+  const pickedToday = pickupsToday.reduce((sum, p) => sum + p.birds, 0);
+  pop -= pickedToday;
+  if (pop < 0) pop = 0;
+
+  return pop;
+}
 function dailyFeedKg(shed, onDate){
   const d = dateOnly(onDate);
   const cleanout = effectiveCleanoutDate(shed);
   if (cleanout && d > dateOnly(cleanout)) return 0;
 
   const age = ageInDays(shed.placementDate, d);
-  const pop = Math.max(0, populationOnDate(shed, d));
+  const pop = Math.max(0, populationOnDateWithDailyMortality(shed, d));
   return pop * feedPerBirdKg(shed, age);
 }
 function feedNeededUntilCleanout(shed, referenceDate = new Date()){
@@ -681,7 +713,7 @@ function cellClassForSiloRemaining(t){
   return "bg-emerald-100 text-emerald-800";
 }
 
-function forecastGroupSiloDepletionTable(groupIndex, siloTonsAll, activeCount, orderThresholdT, endDate, deliveries = []){
+function forecastGroupSiloDepletionTable(groupIndex, siloTonsAll, activeCount, orderSpaceThresholdT, endDate, deliveries = []){
   const today = dateOnly(new Date());
   const end = dateOnly(endDate);
   const MAX_DAYS = 600;
@@ -752,30 +784,42 @@ function forecastGroupSiloDepletionTable(groupIndex, siloTonsAll, activeCount, o
     const usedSilosToday = new Set();
     const emptiedToday = [];
 
-    // Consume in order Silo 1 → 2 → 3
-    for (let idx = 0; idx < activeCount && needKg > 0; idx++) {
-      if (siloKg[idx] <= 0) continue;
-      usedSilosToday.add(idx + 1);
-      const take = Math.min(siloKg[idx], needKg);
-      siloKg[idx] -= take;
-      totalKg -= take;
-      needKg -= take;
+    // Build array of active silos with their current kg, sorted by lowest first
+let activeSilos = [];
+for (let idx = 0; idx < activeCount; idx++) {
+  if (siloKg[idx] > 0) {
+    activeSilos.push({ idx, kg: siloKg[idx] });
+  }
+}
+activeSilos.sort((a, b) => a.kg - b.kg);   // lowest first
 
-      if (siloKg[idx] <= 0 && beforeKg > 0) {
-        const sid = idx + 1;
-        emptiedToday.push(sid);
-        if (!emptyDateBySilo[sid]) emptyDateBySilo[sid] = dateOnly(day);
-      }
-    }
+// Consume from the lowest stock silo first
+for (let { idx } of activeSilos) {
+  if (needKg <= 0) break;
+  if (siloKg[idx] <= 0) continue;
+  usedSilosToday.add(idx + 1);
+  const take = Math.min(siloKg[idx], needKg);
+  siloKg[idx] -= take;
+  totalKg -= take;
+  needKg -= take;
+
+  if (siloKg[idx] <= 0 && beforeKg > 0) {
+    const sid = idx + 1;
+    emptiedToday.push(sid);
+    if (!emptyDateBySilo[sid]) emptyDateBySilo[sid] = dateOnly(day);
+  }
+}
 
     const remainingT = Math.max(0, totalKg / 1000);
     const beforeT = Math.max(0, beforeKg / 1000);
 
-    if (!orderDate && totalStartKg > 0 && remainingT <= orderThresholdT && remainingT > 0) orderDate = day;
+    const totalCapacityT = activeCount * 50;   // each silo max 50T
+const availableSpaceT = totalCapacityT - (totalKg / 1000);
+if (!orderDate && totalStartKg > 0 && availableSpaceT >= orderSpaceThresholdT) orderDate = day;
     if (!runoutDate && totalStartKg > 0 && totalKg <= 0) runoutDate = day;
 
     let badges = "";
-    if (orderDate && iso(day) === iso(orderDate)) badges += `<span class="ml-2 text-[11px] font-semibold text-amber-800">🟡 ORDER (≤ ${orderThresholdT}T)</span>`;
+    if (orderDate && iso(day) === iso(orderDate)) badges += `<span class="ml-2 text-[11px] font-semibold text-amber-800">🟡 ORDER (≥ ${orderSpaceThresholdT}T space)</span>`;
     if (emptiedToday.length) badges += `<span class="ml-2 text-[11px] font-semibold text-rose-700">🔴 Empty: ${emptiedToday.join(", ")}</span>`;
     if (runoutDate && iso(day) === iso(runoutDate)) badges += `<span class="ml-2 text-[11px] font-semibold text-rose-800">⛔ TOTAL EMPTY</span>`;
 
@@ -1006,7 +1050,8 @@ function computeGroupSiloInsights(groupIndex){
 
   const end = groupSiloTableEndDate(groupIndex);
   const deliveries = groupDeliveries[groupIndex] || [];
-  const sim = forecastGroupSiloDepletionTable(groupIndex, [t1,t2,t3], activeCount, 70, end, deliveries);
+  const orderSpaceThreshold = 60;   // 60 tonnes of empty space triggers the order
+const sim = forecastGroupSiloDepletionTable(groupIndex, [t1,t2,t3], activeCount, orderSpaceThreshold, end, deliveries);
 
   const cleanoutKg = groupFeedNeededUntilCleanout(groupIndex);
   const neededT = (cleanoutKg == null) ? null : (cleanoutKg / 1000);
@@ -1195,7 +1240,7 @@ function refreshSiloUI(groupId){
         metricsEl.innerHTML = `
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div class="rounded-2xl border border-slate-200 p-4">
-              <div class="text-xs font-semibold text-slate-700 mb-2">Suggested Order Date (≤ 70T)</div>
+              <div class="text-xs font-semibold text-slate-700 mb-2">Suggested Order Date (≥ 60T space)</div>
               ${s.orderDate
                 ? `<div class="text-2xl font-bold text-amber-700">${fmtDateLong(s.orderDate)}</div>`
                 : `<div class="text-sm text-slate-600">No order trigger found.</div>`}
@@ -1694,9 +1739,9 @@ function shedForecastOpenSection(shed){
   for (let d = new Date(today); d <= end; d.setDate(d.getDate() + 1)){
     const day = dateOnly(d);
     const age = ageInDays(shed.placementDate, day);
-    const pop = populationOnDate(shed, day);
+    const pop = populationOnDateWithDailyMortality(shed, day);
     const perBird = feedPerBirdKg(shed, age);
-    const daily = dailyFeedKg(shed, day);
+    const daily = pop * feedPerBirdKg(shed, age);
     total += daily;
 
     let pickupCell = "", rowClass = "";
