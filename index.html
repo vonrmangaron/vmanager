@@ -253,7 +253,7 @@ const ROSS_308_FEED_INTAKE = {
   41:192,42:197,43:201,44:206,45:211,46:215,47:220,48:223,49:225,50:227,
   51:229,52:230,53:231,54:233,55:233,56:234,57:234,58:234,59:234,60:234
 };
-const DAILY_MORTALITY_RATE = 0.001;   // 0.10% per day
+const DAILY_MORTALITY_BIRDS = 30;
 /* =========================================================
    Date helpers (timezone-safe)
 ========================================================= */
@@ -367,9 +367,8 @@ function populationOnDateWithDailyMortality(shed, onDate){
     pop -= pickedToday;
     if (pop < 0) pop = 0;
 
-    // apply daily mortality at the end of the day
-    const mort = Math.floor(pop * DAILY_MORTALITY_RATE);
-    pop -= mort;
+    // apply fixed daily mortality at the end of the day
+    pop -= DAILY_MORTALITY_BIRDS;
     if (pop < 0) pop = 0;
 
     cur = addDays(cur, 1);
@@ -389,7 +388,7 @@ function dailyFeedKg(shed, onDate){
   if (cleanout && d > dateOnly(cleanout)) return 0;
 
   const age = ageInDays(shed.placementDate, d);
-  const pop = Math.max(0, populationOnDateWithDailyMortality(shed, d));
+  const pop = Math.max(0, populationOnDateWithDailyMortality(shed, d));  // <-- uses the new mortality
   return pop * feedPerBirdKg(shed, age);
 }
 function feedNeededUntilCleanout(shed, referenceDate = new Date()){
